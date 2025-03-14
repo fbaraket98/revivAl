@@ -4,12 +4,12 @@ import json
 import numpy as np
 import os
 from datetime import date
-import inspect
 
 
 
 class SurrogateModel:
     def __init__(self):
+
         self._X_train = None
         self._y_train = None
         self.predict = None
@@ -28,12 +28,12 @@ class SurrogateModel:
         self._model.fit(self._X_train, self._y_train)
 
     @property
-    def X_train(self)->np.ndarray :
+    def X_train(self)->any :
         """Return X.train"""
         return self._X_train
 
     @property
-    def y_train(self)->np.ndarray:
+    def y_train(self)->any:
         """Return y.train"""
         return self._y_train
 
@@ -63,20 +63,20 @@ class SurrogateModel:
         version = __import__(library).__version__
         return {library: version}
 
-    def dump(self, output_dir)->None:
+    def dump(self, output_dir, file_name=None)->None:
         """
         save data, the instance of the model and the dependencies in a hdf5 file.
         :param output_dir: folder path where to save the hdf5 file
+        :param file_name: HDF5 file name where to save the data of the model
         """
         os.makedirs(output_dir, exist_ok=True)
-
         d = date.today()
-
-        h5_path = os.path.join(output_dir, f"{type(self.model).__name__}_{d}.h5")
-        model_type = type(self.model).__name__
-        obj = globals().get(model_type, None)
-        module = inspect.getmodule(obj)
-        module_imported = module.__name__
+        if not file_name:
+            h5_path = os.path.join(output_dir, f"{type(self._model).__name__}_{d}.h5")
+        else:
+            h5_path = os.path.join(output_dir, f"{file_name}.h5")
+        model_type = type(self._model).__name__
+        module_imported = self._model.__class__.__module__
         with h5py.File(h5_path, "w") as f:
             if self.X_train is not None:
                 f.create_dataset("X_train", data=self.X_train)
@@ -95,31 +95,29 @@ class SurrogateModel:
             model_group.attrs["library"] = json.dumps(library_info)
         print(f"Data of the model are saved in {h5_path}.")
 
-    def load(self, path)->None:
+    def load(self, path, file_name:str)->None:
         """
         load data, instance and dependencies from a folder.
-        :param output_dir: folder path with files to load.
+        :param path: folder path with files to load.
+        :param file_name: HDF5 file name to load
         """
 
-        for file in os.listdir(path):
-            if file.endswith('.h5'):
-                file_h5 = os.path.join(path, file)
-                with h5py.File(file_h5, "r") as f:
-                    self._X_train = f["X_train"][()] if "X_train" in f else None
-                    self._y_train = f["y_train"][()] if "y_train" in f else None
-                    self.predict = f['y_predict'][()] if "y_predict" in f else None
-                    model_group = f["model"]
-                    model_type = model_group.attrs["type"]
-                    model_params = json.loads(model_group.attrs["params"])
-                    module_name = model_group.attrs["Imported"]
-                    library = model_group.attrs["library"]
-                    try:
-                        model_class = getattr(__import__(module_name, fromlist=[model_type]), model_type)
-                        self._model = model_class(**model_params)
-                    except:
-                        raise ValueError(f'You must install the package of {module_name}')
-                print(f"Data is loaded from {file_h5}.")
-
+        file_h5 = os.path.join(path, file_name)
+        with h5py.File(file_h5, "r") as f:
+            self._X_train = f["X_train"][()] if "X_train" in f else None
+            self._y_train = f["y_train"][()] if "y_train" in f else None
+            self.predict = f['y_predict'][()] if "y_predict" in f else None
+            model_group = f["model"]
+            model_type = model_group.attrs["type"]
+            model_params = json.loads(model_group.attrs["params"])
+            module_name = model_group.attrs["Imported"]
+            library = model_group.attrs["library"]
+            try:
+                model_class = getattr(__import__(module_name, fromlist=[model_type]), model_type)
+                self._model = model_class(**model_params)
+            except:
+                raise ValueError(f'You must install the package of {module_name}')
+        print(f"Data is loaded from {file_h5}.")
 
 
 

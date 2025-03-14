@@ -1,53 +1,71 @@
 import os
-from revivAI import base
+from revivai import SurrogateModel
 import numpy as np
-import inspect
+import pandas as pd
 
-
-def test_dump():
+def test_X():
     from catboost import CatBoostRegressor
     model = CatBoostRegressor(n_estimators=100, max_depth=5, random_state=42)
-    # Initialise the model and the data
-    surrogate_model = base.SurrogateModel()
+    surrogate_model = SurrogateModel()
 
     X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12], [13, 14, 15]])
     y = np.array([3, 6, 9, 12, 15])
-
     surrogate_model.set(X, y, model)
     surrogate_model.train()
 
-    # Prediction
     X_new = np.array([[2, 3, 4], [5, 6, 7]])
+
     surrogate_model.prediction(X_new)
+    path = './metamodel_data'
+    surrogate_model.dump(path,"cat_boost")
 
-    # Assert
-    assert np.allclose(surrogate_model.X_train, X), "Les données X_train ne correspondent pas."
-    assert np.allclose(surrogate_model.y_train, y), "Les données y_train ne correspondent pas."
-    assert surrogate_model.model == model, "Le modèle n'a pas été correctement défini."
+    load_model = SurrogateModel()
+    load_model.load(path, "cat_boost.h5")
 
-    # save the model
-    surrogate_model.dump("./model_data")
+    assert np.allclose(load_model.X_train,surrogate_model.X_train), "X_train data are not matching."
 
-    # Assert
-    assert os.path.exists('./model_data'), "Le répertoire model_data n'existe pas."
-    assert os.path.exists('./model_data/CatBoostRegressor_2025-01-22.h5'), "Le fichier HDF5 n'a pas été généré."
+def test_y():
+    from catboost import CatBoostRegressor
+    model = CatBoostRegressor(n_estimators=100, max_depth=5, random_state=42)
+    surrogate_model = SurrogateModel()
 
-
-def test_load():
-    # Data
     X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12], [13, 14, 15]])
     y = np.array([3, 6, 9, 12, 15])
+    surrogate_model.set(X, y, model)
+    surrogate_model.train()
 
-    #load the model
-    loaded_model = base.SurrogateModel()
-    loaded_model.load("./model_data")
+    X_new = np.array([[2, 3, 4], [5, 6, 7]])
 
-    # Assert
-    assert np.allclose(loaded_model.X_train, X), "Les données X_train chargées ne correspondent pas."
-    assert np.allclose(loaded_model.y_train, y), "Les données y_train chargées ne correspondent pas."
+    surrogate_model.prediction(X_new)
+    path = './metamodel_data'
+    surrogate_model.dump(path,"cat_boost")
+
+    load_model = SurrogateModel()
+    load_model.load(path, "cat_boost.h5")
+
+    assert np.allclose(load_model.y_train,surrogate_model.y_train), "y_train data are not matching."
+
+def test_prediction():
+    from catboost import CatBoostRegressor
+    model = CatBoostRegressor(n_estimators=100, max_depth=5, random_state=42)
+    surrogate_model = SurrogateModel()
+
+    X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12], [13, 14, 15]])
+    y = np.array([3, 6, 9, 12, 15])
+    surrogate_model.set(X, y, model)
+    surrogate_model.train()
+
+    X_new = np.array([[2, 3, 4], [5, 6, 7]])
+
+    surrogate_model.prediction(X_new)
+    path = './metamodel_data'
+    surrogate_model.dump(path, "cat_boost")
+
+    load_model = SurrogateModel()
+    load_model.load(path, "cat_boost.h5")
+
+    assert np.allclose(load_model.predict, surrogate_model.predict), "Prediction data are not matching."
 
 
-if __name__ == "__main__":
-    test_dump()
-    test_load()
+
 
