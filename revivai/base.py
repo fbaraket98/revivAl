@@ -1,7 +1,6 @@
 
 import h5py
 import json
-import numpy as np
 import os
 from datetime import date
 

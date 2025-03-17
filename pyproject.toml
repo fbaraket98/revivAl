@@ -4,14 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "revivAI"
-version = "2025.1.1"
+version = "2025.3.1"
 description = ""
 authors = [{ name = 'Fatma Baraket', email = 'fatma.baraket@mews-labs.com' }]
 readme = "README.md"
 requires-python = '>=3.6'
 dependencies = [
-  "h5py==3.12.1",
-  "numpy==1.26.4",
-  "catboost==1.2.7"
+  "h5py>3",
 ]
 

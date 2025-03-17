@@ -29,7 +29,8 @@ jobs:
     - name: Analysing the code with pytest
       run: |
         pip install pytest-cov
-        pip install .
+        pip install -r ./requirements.txt
+        pip install -r ./test/requirements_test.txt
         python -m coverage run -m pytest
         python -m coverage report
         python -m coverage json
