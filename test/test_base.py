@@ -1,7 +1,7 @@
-import os
-from revivai import SurrogateModel
+
+from revivai.base import SurrogateModel
 import numpy as np
-import pandas as pd
+
 
 def test_X():
     from catboost import CatBoostRegressor
