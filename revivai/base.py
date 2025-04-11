@@ -6,7 +6,7 @@ from datetime import date
 
 
 
-class SurrogateModel:
+class LiteModel:
     def __init__(self):
 
         self._X_train = None

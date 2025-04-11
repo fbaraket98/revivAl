@@ -1,12 +1,12 @@
 
-from revivai.base import SurrogateModel
+from revivai.base import LiteModel
 import numpy as np
 
 
 def test_X():
     from catboost import CatBoostRegressor
     model = CatBoostRegressor(n_estimators=100, max_depth=5, random_state=42)
-    surrogate_model = SurrogateModel()
+    surrogate_model = LiteModel()
 
     X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12], [13, 14, 15]])
     y = np.array([3, 6, 9, 12, 15])
@@ -19,7 +19,7 @@ def test_X():
     path = './metamodel_data'
     surrogate_model.dump(path,"cat_boost")
 
-    load_model = SurrogateModel()
+    load_model = LiteModel()
     load_model.load(path, "cat_boost.h5")
 
     assert np.allclose(load_model.X_train,surrogate_model.X_train), "X_train data are not matching."
@@ -27,7 +27,7 @@ def test_X():
 def test_y():
     from catboost import CatBoostRegressor
     model = CatBoostRegressor(n_estimators=100, max_depth=5, random_state=42)
-    surrogate_model = SurrogateModel()
+    surrogate_model = LiteModel()
 
     X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12], [13, 14, 15]])
     y = np.array([3, 6, 9, 12, 15])
@@ -40,7 +40,7 @@ def test_y():
     path = './metamodel_data'
     surrogate_model.dump(path,"cat_boost")
 
-    load_model = SurrogateModel()
+    load_model = LiteModel()
     load_model.load(path, "cat_boost.h5")
 
     assert np.allclose(load_model.y_train,surrogate_model.y_train), "y_train data are not matching."
@@ -48,7 +48,7 @@ def test_y():
 def test_prediction():
     from catboost import CatBoostRegressor
     model = CatBoostRegressor(n_estimators=100, max_depth=5, random_state=42)
-    surrogate_model = SurrogateModel()
+    surrogate_model = LiteModel()
 
     X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12], [13, 14, 15]])
     y = np.array([3, 6, 9, 12, 15])
@@ -61,7 +61,7 @@ def test_prediction():
     path = './metamodel_data'
     surrogate_model.dump(path, "cat_boost")
 
-    load_model = SurrogateModel()
+    load_model = LiteModel()
     load_model.load(path, "cat_boost.h5")
 
     assert np.allclose(load_model.predict, surrogate_model.predict), "Prediction data are not matching."
