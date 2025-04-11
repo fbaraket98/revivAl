@@ -1,1 +1,1 @@
-from revivai.base import SurrogateModel
+from revivai.base import LiteModel
