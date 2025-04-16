@@ -68,9 +68,9 @@ def test_prediction():
 
 def test_save_multi_output_model():
     from catboost import CatBoostRegressor
-    from sklearn.multioutput import MultiOutputRegressor, MultiOutputClassifier
+    from sklearn import multioutput
     import pandas as pd
-    model = MultiOutputRegressor(CatBoostRegressor(n_estimators=100, max_depth=5, random_state=42))
+    model = multioutput.MultiOutputRegressor(CatBoostRegressor(n_estimators=100, max_depth=5, random_state=42))
     surrogate_model = LiteModel()
     X = pd.DataFrame({"tension":[1.1324,1.345,1.2431,1.6452],"amplitude":[4.1324,4.345,5.2431,4.6452]})
 
@@ -82,3 +82,5 @@ def test_save_multi_output_model():
     surrogate_model.dump(path,'file_test')
     load_model = LiteModel()
     load_model.load(path, 'file_test.h5')
+
+   
