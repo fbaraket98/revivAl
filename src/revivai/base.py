@@ -1,9 +1,9 @@
 import importlib
-
-import h5py
 import json
 import os
 from datetime import date
+
+import h5py
 from sklearn.multioutput import MultiOutputRegressor, MultiOutputClassifier
 
 
@@ -148,12 +148,12 @@ class LiteModel:
             model_group = f["model"]
             if model_group.attrs['is_multi']:
                 wrapper_cls = model_group.attrs['wrapper_class']
-                estimator_cls =model_group.attrs['estimator_class']
+                estimator_cls = model_group.attrs['estimator_class']
                 wrapper_params = json.loads(model_group.attrs['wrapper_params'])
                 estimator_params = json.loads(model_group.attrs['estimator_params'])
 
-                estimator_module, estimator_name = estimator_cls.rsplit('.',1)
-                wrapper_module, wrapper_name = wrapper_cls.rsplit(".",1)
+                estimator_module, estimator_name = estimator_cls.rsplit('.', 1)
+                wrapper_module, wrapper_name = wrapper_cls.rsplit(".", 1)
 
                 estimator_class = getattr(importlib.import_module(estimator_module), estimator_name)
                 wrapper_class = getattr(importlib.import_module(wrapper_module), wrapper_name)
