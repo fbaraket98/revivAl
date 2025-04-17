@@ -1,0 +1,33 @@
+#!/bin/bash
+
+
+# -- dir for all envs
+ENV_DIR=${ENV_DIR:-$HOME/ENV}
+mkdir -p $ENV_DIR
+
+
+# -- current env with link
+VENV=${ENV_DIR}/mewslabs-revivai
+VLNK=.venv
+ln -sf $VENV $VLNK
+uv venv $VENV  # --python 3.11
+source $VENV/bin/activate
+# .venv\Scripts\activate
+
+
+# -- upgrade pip
+uv pip install --upgrade pip
+uv pip install wheel
+
+
+# -- install local package
+uv pip install -e .[examples,dev]
+
+
+# -- end text
+echo "---"
+echo -e "\e[1mto start the environment, type :\e[0m"
+echo "source ${VENV}/bin/activate"
+echo ""
+echo -e "\e[1mto stop the environment, type :\e[0m"
+echo "deactivate"
