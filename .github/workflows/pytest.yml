@@ -19,28 +19,26 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.12"]
+        python-version: [ "3.12" ]
     steps:
-    - uses: actions/checkout@v3
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Analysing the code with pytest
-      run: |
-        pip install pytest-cov
-        pip install -r ./requirements.txt
-        pip install -r ./test/requirements_test.txt
-        python -m coverage run -m pytest
-        python -m coverage report
-        python -m coverage json
+      - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Analysing the code with pytest
+        run: |
+          pip install .[test]
+          python -m coverage run -m pytest
+          python -m coverage report
+          python -m coverage json
 
-    - name: Coverage Badge
-      uses: tj-actions/coverage-badge-py@v1.8
-      with:
-        output: .static/coverage.svg
-    - name: Publish coverage report to coverage-badge branch
-      uses: JamesIves/github-pages-deploy-action@v4
-      with:
-        branch: coverage-badge
-        folder: .static
+      - name: Coverage Badge
+        uses: tj-actions/coverage-badge-py@v1.8
+        with:
+          output: .static/coverage.svg
+      - name: Publish coverage report to coverage-badge branch
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: coverage-badge
+          folder: .static

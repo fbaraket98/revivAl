@@ -25,7 +25,7 @@ test = [
     "numpy",
     "pandas",
     "pytest",
-    # "pytest-cov",
+    "pytest-cov",
     "pylint",
 ]
 lint = [
