@@ -62,7 +62,7 @@ class LiteModel:
             try:
                 self.predict = self._model.predict_values(X)
             except:
-                raise ValueError('Model was not trained !')
+                raise ValueError("Model was not trained !")
 
     def _get_model_library(self) -> dict:
         """
@@ -109,25 +109,42 @@ class LiteModel:
 
             model_group = f.create_group("model")
 
-            if (isinstance(self._model, MultiOutputRegressor)) | (isinstance(self._model, MultiOutputClassifier)):
-                model_group.attrs['is_multi'] = True
+            if (isinstance(self._model, MultiOutputRegressor)) | (
+                    isinstance(self._model, MultiOutputClassifier)
+            ):
+                model_group.attrs["is_multi"] = True
                 wrapper_params = self._model.get_params(deep=False)
                 base_model = self._model.estimator
-                model_group.attrs[
-                    'wrapper_class'] = self._model.__class__.__module__ + "." + self._model.__class__.__name__
-                model_group.attrs['wrapper_params'] = self._safe_serialize_params(wrapper_params)
-                model_group.attrs[
-                    'estimator_class'] = base_model.__class__.__module__ + '.' + base_model.__class__.__name__
-                model_group.attrs['estimator_params'] = self._safe_serialize_params(base_model.get_params())
+                model_group.attrs["wrapper_class"] = (
+                        self._model.__class__.__module__
+                        + "."
+                        + self._model.__class__.__name__
+                )
+                model_group.attrs["wrapper_params"] = self._safe_serialize_params(
+                    wrapper_params
+                )
+                model_group.attrs["estimator_class"] = (
+                        base_model.__class__.__module__
+                        + "."
+                        + base_model.__class__.__name__
+                )
+                model_group.attrs["estimator_params"] = self._safe_serialize_params(
+                    base_model.get_params()
+                )
 
             else:
-                model_group.attrs['is_multi'] = False
-                model_group.attrs[
-                    'model_class'] = self._model.__class__.__module__ + '.' + self._model.__class__.__name__
+                model_group.attrs["is_multi"] = False
+                model_group.attrs["model_class"] = (
+                        self._model.__class__.__module__
+                        + "."
+                        + self._model.__class__.__name__
+                )
             try:
-                model_group.attrs['params'] = self._safe_serialize_params(self._model.get_params())
+                model_group.attrs["params"] = self._safe_serialize_params(
+                    self._model.get_params()
+                )
             except AttributeError:
-                model_group.attrs['params'] = json.dumps([])
+                model_group.attrs["params"] = json.dumps([])
             # Save library and version information
             library_info = self._get_model_library()
             model_group.attrs["library"] = json.dumps(library_info)
@@ -144,26 +161,30 @@ class LiteModel:
         with h5py.File(file_h5, "r") as f:
             self._X_train = f["X_train"][()] if "X_train" in f else None
             self._y_train = f["y_train"][()] if "y_train" in f else None
-            self.predict = f['y_predict'][()] if "y_predict" in f else None
+            self.predict = f["y_predict"][()] if "y_predict" in f else None
             model_group = f["model"]
-            if model_group.attrs['is_multi']:
-                wrapper_cls = model_group.attrs['wrapper_class']
-                estimator_cls = model_group.attrs['estimator_class']
-                wrapper_params = json.loads(model_group.attrs['wrapper_params'])
-                estimator_params = json.loads(model_group.attrs['estimator_params'])
+            if model_group.attrs["is_multi"]:
+                wrapper_cls = model_group.attrs["wrapper_class"]
+                estimator_cls = model_group.attrs["estimator_class"]
+                wrapper_params = json.loads(model_group.attrs["wrapper_params"])
+                estimator_params = json.loads(model_group.attrs["estimator_params"])
 
-                estimator_module, estimator_name = estimator_cls.rsplit('.', 1)
+                estimator_module, estimator_name = estimator_cls.rsplit(".", 1)
                 wrapper_module, wrapper_name = wrapper_cls.rsplit(".", 1)
 
-                estimator_class = getattr(importlib.import_module(estimator_module), estimator_name)
-                wrapper_class = getattr(importlib.import_module(wrapper_module), wrapper_name)
+                estimator_class = getattr(
+                    importlib.import_module(estimator_module), estimator_name
+                )
+                wrapper_class = getattr(
+                    importlib.import_module(wrapper_module), wrapper_name
+                )
                 wrapper_params.pop("estimator", None)
 
                 estimator = estimator_class(**estimator_params)
                 self._model = wrapper_class(estimator=estimator, **wrapper_params)
             else:
-                model_cls = model_group.attrs['model_class']
-                model_params = json.loads(model_group.attrs['params'])
+                model_cls = model_group.attrs["model_class"]
+                model_params = json.loads(model_group.attrs["params"])
                 module_name, class_name = model_cls.rsplit(".", 1)
                 model_class = getattr(importlib.import_module(module_name), class_name)
                 model = model_class(**model_params)
