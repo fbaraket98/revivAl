@@ -7,9 +7,33 @@ name = "revivAI"
 version = "2025.3.1"
 description = ""
 authors = [{ name = 'Fatma Baraket', email = 'fatma.baraket@mews-labs.com' }]
+license = "MPL-2.0"
 readme = "README.md"
 requires-python = '>=3.6'
-dependencies = [
-  "h5py>3",
-]
 
+dependencies = [
+    "h5py > 3",
+    "scikit-learn",
+]
+[project.optional-dependencies]
+
+examples = [
+    "matplotlib ~= 3.9.2",
+]
+test = [
+    "catboost",
+    "numpy",
+    "pytest",
+    # "pytest-cov",
+    "pylint",
+]
+lint = [
+    "black",
+    "mypy",
+    "ruff",
+]
+dev = [
+    "revivai[test,lint]",
+]
+[project.urls]
+"Homepage" = "https://github.com/eurobios-mews-labs/revivAl"
