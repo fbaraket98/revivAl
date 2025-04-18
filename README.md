@@ -1,4 +1,5 @@
 # revivAI
+![code coverage](https://raw.githubusercontent.com/eurobios-mews-labs/revivAl/coverage-badge/coverage.svg?raw=true)
 
 A python package to save and reuse AI models.
 
