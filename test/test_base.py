@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from catboost import CatBoostRegressor
 
-from revivai.base import LiteModel
+from revival.base import LiteModel
 
 
 @pytest.fixture
