@@ -7,7 +7,6 @@ name = "revivAI"
 version = "2025.3.1"
 description = ""
 authors = [{ name = 'Fatma Baraket', email = 'fatma.baraket@mews-labs.com' }]
-license = "MPL-2.0"
 readme = "README.md"
 requires-python = '>=3.6'
 
