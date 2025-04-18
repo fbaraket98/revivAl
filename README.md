@@ -1,11 +1,11 @@
-# revivAl
+# revival
 ![code coverage](https://raw.githubusercontent.com/eurobios-mews-labs/revivAl/coverage-badge/coverage.svg?raw=true)
 
 A python package to save and reuse AI models.
 
 ## Install
 
-`pip install reviai@git+https://github.com/eurobios-mews-labs/revivai.git`
+`pip install revial@git+https://github.com/eurobios-mews-labs/revival.git`
 
 ## Simple usage
 * **Save AI model**: train the model,predict and save the results
