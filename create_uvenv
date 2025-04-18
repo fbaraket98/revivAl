@@ -7,7 +7,7 @@ mkdir -p $ENV_DIR
 
 
 # -- current env with link
-VENV=${ENV_DIR}/mewslabs-revivai
+VENV=${ENV_DIR}/mewslabs-revival
 VLNK=.venv
 ln -sf $VENV $VLNK
 uv venv $VENV  # --python 3.11
