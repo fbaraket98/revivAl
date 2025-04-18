@@ -15,32 +15,58 @@ on:
       - '**/*.md'
 
 jobs:
+
+  lint:
+    runs-on: ubuntu-latest
+    name: Lint
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8
+
+      - name: Lint with flake8
+        run: |
+          # stop the build if there are Python syntax errors or undefined names
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
   build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.12"]
-    steps:
-    - uses: actions/checkout@v3
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Analysing the code with pytest
-      run: |
-        pip install pytest-cov
-        pip install -r ./requirements.txt
-        pip install -r ./test/requirements_test.txt
-        python -m coverage run -m pytest
-        python -m coverage report
-        python -m coverage json
+        python-version: [ "3.9", "3.10", "3.11", "3.12" ]
 
-    - name: Coverage Badge
-      uses: tj-actions/coverage-badge-py@v1.8
-      with:
-        output: .static/coverage.svg
-    - name: Publish coverage report to coverage-badge branch
-      uses: JamesIves/github-pages-deploy-action@v4
-      with:
-        branch: coverage-badge
-        folder: .static
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Analysing the code with pytest
+        run: |
+          pip install .[test]
+          python -m coverage run -m pytest
+          python -m coverage report
+          python -m coverage json
+
+      - name: Coverage Badge
+        uses: tj-actions/coverage-badge-py@v1.8
+        with:
+          output: .static/coverage.svg
+
+      - name: Publish coverage report to coverage-badge branch
+        continue-on-error: true
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: coverage-badge
+          folder: .static

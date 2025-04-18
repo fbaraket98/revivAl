@@ -1,3 +1,0 @@
-numpy>1
-catboost>1
-scikit-learn
