@@ -83,4 +83,3 @@ def test_save_multi_output_model():
     load_model = LiteModel()
     load_model.load(path, 'file_test.h5')
 
-   
