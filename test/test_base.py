@@ -1,5 +1,5 @@
 
-from revivai.base import LiteModel
+from src import LiteModel
 import numpy as np
 
 
