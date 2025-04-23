@@ -1,9 +1,9 @@
 import importlib
+
+import h5py
 import json
 import os
 from datetime import date
-
-import h5py
 from sklearn.multioutput import MultiOutputRegressor, MultiOutputClassifier
 
 
@@ -14,6 +14,7 @@ class LiteModel:
         self._y_train = None
         self.predict = None
         self._model = None
+        self._fitted = None
 
     def set(self, X, y, model) -> None:
         self._X_train = X
@@ -33,6 +34,7 @@ class LiteModel:
             except AttributeError:
 
                 self._model.fit(self._X_train, self._y_train)
+        self._fitted = True
 
     @property
     def X_train(self) -> any:
@@ -53,7 +55,8 @@ class LiteModel:
         """
         Predict value for data X.
         """
-
+        if not self._fitted:
+            self.train()
         if not self._model:
             raise ValueError("The model was not set or load.")
         try:
@@ -82,7 +85,7 @@ class LiteModel:
             elif isinstance(v, dict):
                 return {k: convert(i) for k, i in v.items()}
             else:
-                return str(v)  # fallback: stringify everything else
+                return str(v)
 
         return json.dumps(convert(params))
 
@@ -106,27 +109,29 @@ class LiteModel:
                 f.create_dataset("y_train", data=self.y_train)
             if self.predict is not None:
                 f.create_dataset("y_predict", data=self.predict)
+            if self._fitted is not None:
+                f.create_dataset("fitted", data=self._fitted)
 
             model_group = f.create_group("model")
 
-            if (isinstance(self._model, MultiOutputRegressor)) | (
-                    isinstance(self._model, MultiOutputClassifier)
+            if (isinstance(self._model, MultiOutputRegressor)) or (
+                isinstance(self._model, MultiOutputClassifier)
             ):
                 model_group.attrs["is_multi"] = True
                 wrapper_params = self._model.get_params(deep=False)
                 base_model = self._model.estimator
                 model_group.attrs["wrapper_class"] = (
-                        self._model.__class__.__module__
-                        + "."
-                        + self._model.__class__.__name__
+                    self._model.__class__.__module__
+                    + "."
+                    + self._model.__class__.__name__
                 )
                 model_group.attrs["wrapper_params"] = self._safe_serialize_params(
                     wrapper_params
                 )
                 model_group.attrs["estimator_class"] = (
-                        base_model.__class__.__module__
-                        + "."
-                        + base_model.__class__.__name__
+                    base_model.__class__.__module__
+                    + "."
+                    + base_model.__class__.__name__
                 )
                 model_group.attrs["estimator_params"] = self._safe_serialize_params(
                     base_model.get_params()
@@ -135,9 +140,9 @@ class LiteModel:
             else:
                 model_group.attrs["is_multi"] = False
                 model_group.attrs["model_class"] = (
-                        self._model.__class__.__module__
-                        + "."
-                        + self._model.__class__.__name__
+                    self._model.__class__.__module__
+                    + "."
+                    + self._model.__class__.__name__
                 )
             try:
                 model_group.attrs["params"] = self._safe_serialize_params(
