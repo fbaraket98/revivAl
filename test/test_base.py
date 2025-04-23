@@ -3,8 +3,7 @@ import tempfile
 import numpy as np
 import pytest
 from catboost import CatBoostRegressor
-
-from src import LiteModel
+from revival import LiteModel
 
 
 @pytest.fixture

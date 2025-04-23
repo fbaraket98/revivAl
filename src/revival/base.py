@@ -114,7 +114,7 @@ class LiteModel:
 
             model_group = f.create_group("model")
 
-            if (isinstance(self._model, MultiOutputRegressor)) | (
+            if (isinstance(self._model, MultiOutputRegressor)) or (
                 isinstance(self._model, MultiOutputClassifier)
             ):
                 model_group.attrs["is_multi"] = True
