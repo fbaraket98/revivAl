@@ -49,8 +49,7 @@ class LiteModel:
         self._fitted = True
 
     def prediction(self, X) -> None:
-        if not self._fitted:
-            self.train()
+        
         if not self._model:
             raise ValueError("The model was not set or loaded.")
         try:
@@ -171,7 +170,6 @@ class LiteModel:
             self._X_train = f["X_train"][()] if "X_train" in f else None
             self._y_train = f["y_train"][()] if "y_train" in f else None
             self.predict = f["y_predict"][()] if "y_predict" in f else None
-            self._fitted = f.attrs.get("fitted", False)
 
             # Load model bytes and metadata
             model_data = bytes(f["model_data"][()])
