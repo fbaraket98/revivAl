@@ -33,7 +33,7 @@ def test_X(lite_model):
     with tempfile.TemporaryDirectory() as tmpdir:
         lite_model.dump(tmpdir, "cat_boost")
         load_model = LiteModel()
-        load_model.load(tmpdir, "cat_boost.h5")
+        load_model.load(tmpdir, "cat_boost")
 
     assert np.allclose(
         load_model.X_train, lite_model.X_train
@@ -44,7 +44,7 @@ def test_y(lite_model):
     with tempfile.TemporaryDirectory() as tmpdir:
         lite_model.dump(tmpdir, "cat_boost")
         load_model = LiteModel()
-        load_model.load(tmpdir, "cat_boost.h5")
+        load_model.load(tmpdir, "cat_boost")
 
     assert np.allclose(
         load_model.y_train, lite_model.y_train
@@ -55,7 +55,7 @@ def test_prediction(lite_model):
     with tempfile.TemporaryDirectory() as tmpdir:
         lite_model.dump(tmpdir, "cat_boost")
         load_model = LiteModel()
-        load_model.load(tmpdir, "cat_boost.h5")
+        load_model.load(tmpdir, "cat_boost")
 
     assert np.allclose(
         load_model.predict, lite_model.predict
@@ -97,4 +97,4 @@ def test_save_multi_output_model():
     with tempfile.TemporaryDirectory() as tmpdir:
         surrogate_model.dump(tmpdir, "file_test")
         load_model = LiteModel()
-        load_model.load(tmpdir, "file_test.h5")
+        load_model.load(tmpdir, "file_test")
