@@ -15,22 +15,26 @@ A python package to save and reuse AI models.
 ```python
 import numpy as np
 from catboost import CatBoostRegressor
-
-from revival.base import SurrogateModel
-
-model = CatBoostRegressor(n_estimators=100, max_depth=5, random_state=42)
+from revival import LiteModel
 
 # Initialise model and data
+model = CatBoostRegressor(n_estimators=100, max_depth=5, random_state=42)
 X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12], [13, 14, 15]])
 y = np.array([3, 6, 9, 12, 15])
-surrogate_model = SurrogateModel()
+
+#Instanciate LiteModel
+surrogate_model = LiteModel()
+#set X, y and model
 surrogate_model.set(X, y, model)
+#fit the model
 surrogate_model.train()
 
 # Prediction
 X_new = np.array([[2, 3, 4], [5, 6, 7]])
 surrogate_model.prediction(X_new)
-surrogate_model.dump("./model_data")
+
+#Save the trained model
+surrogate_model.dump("./model_data",'model_file')
 ```
 
 The result of this example is a HDF5 file where the information about the model used are stored
@@ -38,10 +42,13 @@ The result of this example is a HDF5 file where the information about the model 
 * **Reused the stored AI model** Load the stored model and reuse it.
 
 ```python
-from revivai.base import SurrogateModel
+from revival import LiteModel
+import numpy as np
 
-loaded_model = SurrogateModel()
-loaded_model.load("./model_data")
+loaded_model = LiteModel()
+loaded_model.load("./model_data",'model_file')
+X_new = np.array([[1, 4, 2], [7, 2, 1], [3, 3, 9], [4, 10, 11], [12, 3, 11]])
+loaded_model.prediction(X_new)
 ```
 
 The stored model is loaded.
