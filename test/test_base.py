@@ -24,7 +24,7 @@ def lite_model():
     lite_model.train()
 
     X_new = np.array([[2, 3, 4], [5, 6, 7]])
-    lite_model.prediction(X_new)
+    lite_model.predict(X_new)
 
     return lite_model
 
@@ -58,7 +58,7 @@ def test_prediction(lite_model):
         load_model.load(tmpdir, "cat_boost")
 
     assert np.allclose(
-        load_model.predict, lite_model.predict
+        load_model.prediction, lite_model.prediction
     ), "Prediction data are not matching."
 
 
@@ -92,7 +92,7 @@ def test_save_multi_output_model():
 
     surrogate_model.set(X, y, model)
     surrogate_model.train()
-    surrogate_model.prediction(X)
+    surrogate_model.predict(X)
 
     with tempfile.TemporaryDirectory() as tmpdir:
         surrogate_model.dump(tmpdir, "file_test")
