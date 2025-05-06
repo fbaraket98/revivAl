@@ -16,7 +16,7 @@ class LiteModel:
     def __init__(self):
         self._X_train = None
         self._y_train = None
-        self.predict = None
+        self.prediction = None
         self._model = None
         self._fitted = False
 
@@ -48,18 +48,17 @@ class LiteModel:
                 self._model.fit(self._X_train, self._y_train)
         self._fitted = True
 
-    def prediction(self, X) -> None:
-        
+    def predict(self, X) -> None:
         if not self._model:
             raise ValueError("The model was not set or loaded.")
         try:
-            self.predict = self._model.predict(X)
+            self.prediction = self._model.predict(X)
         except:
             try:
-                self.predict = self._model.predict_values(X)
+                self.prediction = self._model.predict_values(X)
             except:
                 raise ValueError("Model was not trained!")
-
+        return self.prediction
     @staticmethod
     def _safe_serialize_params(params):
         def convert(v):
@@ -84,7 +83,11 @@ class LiteModel:
 
         buffer = io.BytesIO()
         if isinstance(self._model, krs_models.Model):
-            krs_models.save_model(self._model, buffer, save_format='h5')
+            with tempfile.NamedTemporaryFile(suffix=".h5", delete=False) as tmp:
+                self._model.save(tmp.name)
+                tmp.seek(0)
+                buffer.write(tmp.read())
+            os.remove(tmp.name)
         elif isinstance(self._model, (CatBoostClassifier, CatBoostRegressor)):
             with tempfile.NamedTemporaryFile(suffix=".cbm", delete=False) as tmp:
                 self._model.save_model(tmp.name)
@@ -99,7 +102,12 @@ class LiteModel:
         buffer_io = io.BytesIO(buffer)
 
         if lib in ['keras', 'tensorflow']:
-            return krs_models.load_model(buffer_io)
+            with tempfile.NamedTemporaryFile(suffix=".h5", delete=False) as tmp:
+                tmp.write(buffer_io.read())
+                tmp.flush()
+                model = krs_models.load_model(tmp.name)
+            os.remove(tmp.name)
+            return model
 
         elif lib == 'catboost':
             cls = getattr(importlib.import_module("catboost"), class_name)
@@ -126,8 +134,8 @@ class LiteModel:
                 f.create_dataset("X_train", data=self._X_train)
             if self._y_train is not None:
                 f.create_dataset("y_train", data=self._y_train)
-            if self.predict is not None:
-                f.create_dataset("y_predict", data=self.predict)
+            if self.prediction is not None:
+                f.create_dataset("y_predict", data=self.prediction)
             f.attrs["fitted"] = self._fitted
 
             # Serialize and save the model as raw bytes
@@ -169,7 +177,7 @@ class LiteModel:
         with h5py.File(file_path, "r") as f:
             self._X_train = f["X_train"][()] if "X_train" in f else None
             self._y_train = f["y_train"][()] if "y_train" in f else None
-            self.predict = f["y_predict"][()] if "y_predict" in f else None
+            self.prediction = f["y_predict"][()] if "y_predict" in f else None
 
             # Load model bytes and metadata
             model_data = bytes(f["model_data"][()])
