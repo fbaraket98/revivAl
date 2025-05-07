@@ -139,9 +139,19 @@ class LiteModel:
 
         with h5py.File(file_path, "w") as f:
             if self._X_train is not None:
-                f.create_dataset("X_train", data=self._X_train)
+                if isinstance(self._X_train, pd.DataFrame):
+                    f.create_dataset("X_train", data=self._X_train.values)
+                    f.create_dataset("X_train_columns", data=np.array(self._X_train.columns.astype(str), dtype='S'))
+                    f.create_dataset("X_train_index", data=np.array(self._X_train.index.astype(str), dtype='S'))
+                else:
+                    f.create_dataset("X_train", data=self._X_train)
             if self._y_train is not None:
-                f.create_dataset("y_train", data=self._y_train)
+                if isinstance(self._y_train, pd.DataFrame):
+                    f.create_dataset("y_train", data=self._y_train.values)
+                    f.create_dataset("y_train_columns", data=np.array(self._y_train.columns.astype(str), dtype='S'))
+                    f.create_dataset("y_train_index", data=np.array(self._y_train.index.astype(str), dtype='S'))
+                else:
+                    f.create_dataset("y_train", data=self._y_train)
             if self.prediction is not None:
                 f.create_dataset("y_predict", data=self.prediction)
             f.attrs["fitted"] = self._fitted
@@ -183,8 +193,22 @@ class LiteModel:
     def load(self, path, file_name: str) -> None:
         file_path = os.path.join(path, f"{file_name}.h5")
         with h5py.File(file_path, "r") as f:
-            self._X_train = f["X_train"][()] if "X_train" in f else None
-            self._y_train = f["y_train"][()] if "y_train" in f else None
+            if "X_train" in f:
+                X_data = f["X_train"][()]
+                if "X_train_columns" in f and "X_train_index" in f:
+                    columns = [col.decode("utf-8") for col in f["X_train_columns"][()]]
+                    index = [idx.decode("utf-8") for idx in f["X_train_index"][()]]
+                    self._X_train = pd.DataFrame(X_data, columns=columns, index=index)
+                else:
+                    self._X_train = X_data
+            if "y_train" in f:
+                y_data = f["y_train"][()]
+                if "y_train_columns" in f and "y_train_index" in f:
+                    columns = [col.decode("utf-8") for col in f["y_train_columns"][()]]
+                    index = [idx.decode("utf-8") for idx in f["y_train_index"][()]]
+                    self._y_train = pd.DataFrame(y_data, columns=columns, index=index)
+                else:
+                    self._y_train = y_data
             self.prediction = f["y_predict"][()] if "y_predict" in f else None
 
             # Load model bytes and metadata
