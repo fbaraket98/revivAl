@@ -4,6 +4,8 @@ import os
 import h5py
 import joblib
 import io
+
+import pandas as pd
 import tensorflow.keras.models as krs_models
 from datetime import date
 from sklearn.multioutput import MultiOutputRegressor, MultiOutputClassifier
@@ -16,7 +18,7 @@ class LiteModel:
     def __init__(self):
         self._X_train = None
         self._y_train = None
-        self.prediction = None
+        self.prediction = pd.DataFrame()
         self._model = None
         self._fitted = False
 
@@ -58,7 +60,13 @@ class LiteModel:
                 self.prediction = self._model.predict_values(X)
             except:
                 raise ValueError("Model was not trained!")
+        if self.prediction.ndim == 3 and self.prediction.shape[0] == 1:
+            self.prediction = self.prediction[0]
+
+        self.prediction = pd.DataFrame(self.prediction)
+        self.prediction.columns = pd.DataFrame(self.y_train).columns
         return self.prediction
+
     @staticmethod
     def _safe_serialize_params(params):
         def convert(v):
