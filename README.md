@@ -16,7 +16,6 @@ A python package to save and reuse AI models.
 import numpy as np
 from catboost import CatBoostRegressor
 from revival import LiteModel
-
 # Initialise model and data
 model = CatBoostRegressor(n_estimators=100, max_depth=5, random_state=42)
 X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12], [13, 14, 15]])
@@ -31,7 +30,7 @@ surrogate_model.train()
 
 # Prediction
 X_new = np.array([[2, 3, 4], [5, 6, 7]])
-surrogate_model.prediction(X_new)
+y_pred = surrogate_model.predict(X_new)
 
 #Save the trained model
 surrogate_model.dump("./model_data",'model_file')
@@ -46,9 +45,9 @@ from revival import LiteModel
 import numpy as np
 
 loaded_model = LiteModel()
-loaded_model.load("./model_data",'model_file')
+loaded_model.load("./model_data", 'model_file')
 X_new = np.array([[1, 4, 2], [7, 2, 1], [3, 3, 9], [4, 10, 11], [12, 3, 11]])
-loaded_model.prediction(X_new)
+y_pred = loaded_model.predict(X_new)
 ```
 
 The stored model is loaded.
