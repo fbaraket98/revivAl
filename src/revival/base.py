@@ -24,7 +24,6 @@ from sklearn.metrics import accuracy_score, r2_score
 from sklearn.multioutput import MultiOutputClassifier, MultiOutputRegressor
 
 
-
 class LiteModel:
     def __init__(self, X_train: pd.DataFrame, y_train: pd.DataFrame, model):
         self._X_train = X_train
@@ -76,9 +75,9 @@ class LiteModel:
 
             # Detect classification (y must be categorical or discrete)
             is_classifier = (
-                    hasattr(model, "predict_proba")
-                    or hasattr(model, "_estimator_type")
-                    and model._estimator_type == "classifier"
+                hasattr(model, "predict_proba")
+                or hasattr(model, "_estimator_type")
+                and model._estimator_type == "classifier"
             )
             if isinstance(y_true, pd.DataFrame):
                 y_true = y_true.values
@@ -215,17 +214,17 @@ class LiteModel:
                 model_group.attrs["is_multi"] = True
                 base_model = self._model.estimator
                 model_group.attrs["wrapper_class"] = (
-                        self._model.__class__.__module__
-                        + "."
-                        + self._model.__class__.__name__
+                    self._model.__class__.__module__
+                    + "."
+                    + self._model.__class__.__name__
                 )
                 model_group.attrs["wrapper_params"] = self._safe_serialize_params(
                     self._model.get_params(deep=False)
                 )
                 model_group.attrs["estimator_class"] = (
-                        base_model.__class__.__module__
-                        + "."
-                        + base_model.__class__.__name__
+                    base_model.__class__.__module__
+                    + "."
+                    + base_model.__class__.__name__
                 )
                 model_group.attrs["estimator_params"] = self._safe_serialize_params(
                     base_model.get_params()
@@ -233,9 +232,9 @@ class LiteModel:
             else:
                 model_group.attrs["is_multi"] = False
                 model_group.attrs["model_class"] = (
-                        self._model.__class__.__module__
-                        + "."
-                        + self._model.__class__.__name__
+                    self._model.__class__.__module__
+                    + "."
+                    + self._model.__class__.__name__
                 )
                 try:
                     model_group.attrs["params"] = self._safe_serialize_params(
@@ -247,6 +246,3 @@ class LiteModel:
             model_group.attrs["library"] = json.dumps(self._get_model_library())
 
         print(f"Model and metadata saved to {file_path}")
-
-
-
