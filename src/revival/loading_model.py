@@ -18,7 +18,7 @@ import pandas as pd
 from revival import LiteModel
 from src.utils.utils import deserialize_model
 
-def load(path: str, file_name: str) -> None:
+def load_model(path: str, file_name: str) -> None:
     """Function that loads a trained model and its data from a hdf5 file.
     Parameters:
     ----------

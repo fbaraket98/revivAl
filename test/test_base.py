@@ -14,7 +14,7 @@ import numpy as np
 import pytest
 from catboost import CatBoostRegressor
 
-from revival import LiteModel
+from revival import LiteModel, load_model
 
 
 @pytest.fixture
@@ -41,29 +41,29 @@ def lite_model():
 def test_X(lite_model):
     with tempfile.TemporaryDirectory() as tmpdir:
         lite_model.dump(tmpdir, "cat_boost")
-        load_model = LiteModel.load(tmpdir, "cat_boost")
+        loaded_model = load_model(tmpdir, "cat_boost")
 
     assert np.allclose(
-        load_model.X_train, lite_model.X_train
+        loaded_model.X_train, lite_model.X_train
     ), "X_train data are not matching."
 
 
 def test_y(lite_model):
     with tempfile.TemporaryDirectory() as tmpdir:
         lite_model.dump(tmpdir, "cat_boost")
-        load_model = LiteModel.load(tmpdir, "cat_boost")
+        loaded_model = load_model(tmpdir, "cat_boost")
 
     assert np.allclose(
-        load_model.y_train, lite_model.y_train
+        loaded_model.y_train, lite_model.y_train
     ), "y_train data are not matching."
 
 
 def test_prediction(lite_model):
     with tempfile.TemporaryDirectory() as tmpdir:
         lite_model.dump(tmpdir, "cat_boost")
-        load_model = LiteModel.load(tmpdir, "cat_boost")
+        loaded_model = load_model(tmpdir, "cat_boost")
     assert np.allclose(
-        load_model.prediction, lite_model.prediction
+        loaded_model.prediction, lite_model.prediction
     ), "Prediction data are not matching."
 
 
@@ -100,8 +100,8 @@ def test_save_multi_output_model():
 
     with tempfile.TemporaryDirectory() as tmpdir:
         surrogate_model.dump(tmpdir, "file_test")
-        load_model = LiteModel.load(tmpdir, "file_test")
-    load_prediction = load_model.prediction
+        loaded_model = load_model(tmpdir, "file_test")
+    load_prediction = loaded_model.prediction
     assert np.allclose(
         sr_prediction, load_prediction
     ), "Predictions are not matching for multioutput Regressor"
