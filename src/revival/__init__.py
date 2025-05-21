@@ -9,3 +9,4 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 from revival.base import LiteModel
+from revival.load_model import load

@@ -16,7 +16,6 @@ import tempfile
 import joblib
 import tensorflow.keras.models as krs_models
 
-
 def deserialize_model(buffer: bytes, lib: str, class_name: str):
     buffer_io = io.BytesIO(buffer)
 
@@ -41,3 +40,4 @@ def deserialize_model(buffer: bytes, lib: str, class_name: str):
 
     else:
         return joblib.load(buffer_io)
+
