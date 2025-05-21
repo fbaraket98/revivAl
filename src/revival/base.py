@@ -45,11 +45,11 @@ class LiteModel:
             X test data
         y_test : pd.DataFrame
             y test data
-            """
+        """
         self._X_test = X_test
         self._y_test = y_test
 
-    def set(self, X: pd.DataFrame, y:pd.DataFrame, model:BaseEstimator) -> None:
+    def set(self, X: pd.DataFrame, y: pd.DataFrame, model: BaseEstimator) -> None:
         """Function to set train data and the model
         Parameters
         X : pd.DataFrame
@@ -58,7 +58,7 @@ class LiteModel:
             y train data
         model : BaseEstimator
             the model used
-            """
+        """
         self._X_train = X
         self._y_train = y
         self._model = model
@@ -79,10 +79,11 @@ class LiteModel:
         """Function that prints the model used and its score"""
 
         # Multioutput wrapper: get inner model
-        model = self._model.estimator.model if isinstance(self._model,
-                                                          (
-                                                              MultiOutputRegressor,
-                                                              MultiOutputClassifier)) else self._model
+        model = (
+            self._model.estimator.model
+            if isinstance(self._model, (MultiOutputRegressor, MultiOutputClassifier))
+            else self._model
+        )
         if self.score is None:
             X_eval = X if X is not None else self._X_train
             y_eval = y if y is not None else self._y_train
@@ -92,8 +93,9 @@ class LiteModel:
 
             # Detect classification (y must be categorical or discrete)
             is_classifier = (
-                    hasattr(model, "predict_proba") or
-                    hasattr(model, "_estimator_type") and model._estimator_type == "classifier"
+                hasattr(model, "predict_proba")
+                or hasattr(model, "_estimator_type")
+                and model._estimator_type == "classifier"
             )
             if isinstance(y_true, pd.DataFrame):
                 y_true = y_true.values
@@ -109,14 +111,14 @@ class LiteModel:
     @staticmethod
     def get_model_name(model):
         """Function that returns the name of the model"""
-        if hasattr(model, 'name'):
+        if hasattr(model, "name"):
             return model.name
-        elif hasattr(model, '__class__'):
+        elif hasattr(model, "__class__"):
             return model.__class__.__name__
         else:
             return str(type(model))
 
-    def predict(self, X_test:pd.DataFrame) -> None:
+    def predict(self, X_test: pd.DataFrame) -> None:
         if not self._model:
             raise ValueError("The model was not set or loaded.")
         try:
@@ -175,7 +177,7 @@ class LiteModel:
     def _deserialize_model(self, buffer: bytes, lib: str, class_name: str):
         buffer_io = io.BytesIO(buffer)
 
-        if lib in ['keras', 'tensorflow']:
+        if lib in ["keras", "tensorflow"]:
             with tempfile.NamedTemporaryFile(suffix=".h5", delete=False) as tmp:
                 tmp.write(buffer_io.read())
                 tmp.flush()
@@ -183,7 +185,7 @@ class LiteModel:
             os.remove(tmp.name)
             return model
 
-        elif lib == 'catboost':
+        elif lib == "catboost":
             cls = getattr(importlib.import_module("catboost"), class_name)
             model = cls()
 
@@ -197,7 +199,7 @@ class LiteModel:
         else:
             return joblib.load(buffer_io)
 
-    def dump(self, output_dir:str, file_name:str=None) -> None:
+    def dump(self, output_dir: str, file_name: str = None) -> None:
         """Function that aims to save the trained model and its data
         Parameters
         ----------
@@ -205,7 +207,7 @@ class LiteModel:
             path where to save the file
         file_name : str
             name of the file where to save the model and its data
-            """
+        """
         os.makedirs(output_dir, exist_ok=True)
         d = date.today().strftime("%Y%m%d")
         file_name = file_name if file_name else f"{type(self._model).__name__}_{d}"
@@ -215,36 +217,60 @@ class LiteModel:
             if self._X_train is not None:
                 if isinstance(self._X_train, pd.DataFrame):
                     f.create_dataset("X_train", data=self._X_train.values)
-                    f.create_dataset("X_train_columns", data=np.array(self._X_train.columns.astype(str), dtype='S'))
-                    f.create_dataset("X_train_index", data=np.array(self._X_train.index.astype(str), dtype='S'))
+                    f.create_dataset(
+                        "X_train_columns",
+                        data=np.array(self._X_train.columns.astype(str), dtype="S"),
+                    )
+                    f.create_dataset(
+                        "X_train_index",
+                        data=np.array(self._X_train.index.astype(str), dtype="S"),
+                    )
                 else:
                     f.create_dataset("X_train", data=self._X_train)
             if self._y_train is not None:
                 if isinstance(self._y_train, pd.DataFrame):
                     f.create_dataset("y_train", data=self._y_train.values)
-                    f.create_dataset("y_train_columns", data=np.array(self._y_train.columns.astype(str), dtype='S'))
-                    f.create_dataset("y_train_index", data=np.array(self._y_train.index.astype(str), dtype='S'))
+                    f.create_dataset(
+                        "y_train_columns",
+                        data=np.array(self._y_train.columns.astype(str), dtype="S"),
+                    )
+                    f.create_dataset(
+                        "y_train_index",
+                        data=np.array(self._y_train.index.astype(str), dtype="S"),
+                    )
                 else:
                     f.create_dataset("y_train", data=self._y_train)
             if self._y_test is not None:
                 if isinstance(self._y_test, pd.DataFrame):
                     f.create_dataset("y_test", data=self._y_test.values)
-                    f.create_dataset("y_test_columns", data=np.array(self._y_test.columns.astype(str), dtype='S'))
-                    f.create_dataset("y_test_index", data=np.array(self._y_test.index.astype(str), dtype='S'))
+                    f.create_dataset(
+                        "y_test_columns",
+                        data=np.array(self._y_test.columns.astype(str), dtype="S"),
+                    )
+                    f.create_dataset(
+                        "y_test_index",
+                        data=np.array(self._y_test.index.astype(str), dtype="S"),
+                    )
                 else:
                     f.create_dataset("y_test", data=self._y_train)
 
             if self._X_test is not None:
                 if isinstance(self._X_test, pd.DataFrame):
                     f.create_dataset("X_test", data=self._X_test.values)
-                    f.create_dataset("X_test_columns", data=np.array(self._X_test.columns.astype(str), dtype='S'))
-                    f.create_dataset("X_test_index", data=np.array(self._X_test.index.astype(str), dtype='S'))
+                    f.create_dataset(
+                        "X_test_columns",
+                        data=np.array(self._X_test.columns.astype(str), dtype="S"),
+                    )
+                    f.create_dataset(
+                        "X_test_index",
+                        data=np.array(self._X_test.index.astype(str), dtype="S"),
+                    )
                 else:
                     f.create_dataset("X_test", data=self._X_train)
             if self.prediction is not None:
                 f.create_dataset("y_predict", data=self.prediction)
             if self.score is not None:
-                f.attrs['score'] = self.score
+                f.attrs["score"] = self.score
 
             f.attrs["fitted"] = self._fitted
 
@@ -257,13 +283,17 @@ class LiteModel:
                 model_group.attrs["is_multi"] = True
                 base_model = self._model.estimator
                 model_group.attrs["wrapper_class"] = (
-                        self._model.__class__.__module__ + "." + self._model.__class__.__name__
+                    self._model.__class__.__module__
+                    + "."
+                    + self._model.__class__.__name__
                 )
                 model_group.attrs["wrapper_params"] = self._safe_serialize_params(
                     self._model.get_params(deep=False)
                 )
                 model_group.attrs["estimator_class"] = (
-                        base_model.__class__.__module__ + "." + base_model.__class__.__name__
+                    base_model.__class__.__module__
+                    + "."
+                    + base_model.__class__.__name__
                 )
                 model_group.attrs["estimator_params"] = self._safe_serialize_params(
                     base_model.get_params()
@@ -271,10 +301,14 @@ class LiteModel:
             else:
                 model_group.attrs["is_multi"] = False
                 model_group.attrs["model_class"] = (
-                        self._model.__class__.__module__ + "." + self._model.__class__.__name__
+                    self._model.__class__.__module__
+                    + "."
+                    + self._model.__class__.__name__
                 )
                 try:
-                    model_group.attrs["params"] = self._safe_serialize_params(self._model.get_params())
+                    model_group.attrs["params"] = self._safe_serialize_params(
+                        self._model.get_params()
+                    )
                 except AttributeError:
                     model_group.attrs["params"] = json.dumps({})
 
@@ -282,7 +316,7 @@ class LiteModel:
 
         print(f"Model and metadata saved to {file_path}")
 
-    def load(self, path:str, file_name: str) -> None:
+    def load(self, path: str, file_name: str) -> None:
         """Function that loads a trained model and its data from a hdf5 file.
         Parameters:
         ----------
@@ -290,7 +324,7 @@ class LiteModel:
             the path where the file is saved
         file_name: str
             the name of the file where the model is saved
-            """
+        """
         file_path = os.path.join(path, f"{file_name}.h5")
         with h5py.File(file_path, "r") as f:
             if "X_train" in f:
@@ -314,7 +348,9 @@ class LiteModel:
                 if "y_test_columns" in f and "y_test_index" in f:
                     columns = [col.decode("utf-8") for col in f["y_test_columns"][()]]
                     index = [idx.decode("utf-8") for idx in f["y_test_index"][()]]
-                    self._y_test = pd.DataFrame(y_test_data, columns=columns, index=index)
+                    self._y_test = pd.DataFrame(
+                        y_test_data, columns=columns, index=index
+                    )
                 else:
                     self._y_test = y_test_data
             if "X_test" in f:
@@ -322,7 +358,9 @@ class LiteModel:
                 if "X_test_columns" in f and "X_test_index" in f:
                     columns = [col.decode("utf-8") for col in f["X_test_columns"][()]]
                     index = [idx.decode("utf-8") for idx in f["X_test_index"][()]]
-                    self._X_test = pd.DataFrame(x_test_data, columns=columns, index=index)
+                    self._X_test = pd.DataFrame(
+                        x_test_data, columns=columns, index=index
+                    )
                 else:
                     self._X_test = x_test_data
             self.prediction = f["y_predict"][()] if "y_predict" in f else None
@@ -332,8 +370,11 @@ class LiteModel:
             model_meta = f["model_meta"]
             library = json.loads(model_meta.attrs["library"])
             lib_name = next(iter(library.keys()))
-            model_class = model_meta.attrs["estimator_class"] if model_meta.attrs.get("is_multi", False) \
+            model_class = (
+                model_meta.attrs["estimator_class"]
+                if model_meta.attrs.get("is_multi", False)
                 else model_meta.attrs["model_class"]
+            )
             lib_name = next(iter(json.loads(model_meta.attrs["library"]).keys()))
             cls_name = model_class.split(".")[-1]
 

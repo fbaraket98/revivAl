@@ -23,11 +23,12 @@ def lite_model():
     lite_model.set(X, y, model)
     lite_model.train()
     X_new = np.array([[2, 3, 4], [5, 6, 7]])
-    lite_model.set_test_data(X_test=X_new,y_test=None)
+    lite_model.set_test_data(X_test=X_new, y_test=None)
     lite_model.predict(lite_model._X_test)
     lite_model.get_model_info()
 
     return lite_model
+
 
 def test_X(lite_model):
     with tempfile.TemporaryDirectory() as tmpdir:
