@@ -1,3 +1,13 @@
+# Copyright MewsLabs 2025
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#     http://www.apache.org/licenses/LICENSE-2.0
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and limitations under the License.
+
 import io
 import json
 import os
@@ -67,9 +77,9 @@ class LiteModel:
 
             # Detect classification (y must be categorical or discrete)
             is_classifier = (
-                hasattr(model, "predict_proba")
-                or hasattr(model, "_estimator_type")
-                and model._estimator_type == "classifier"
+                    hasattr(model, "predict_proba")
+                    or hasattr(model, "_estimator_type")
+                    and model._estimator_type == "classifier"
             )
             if isinstance(y_true, pd.DataFrame):
                 y_true = y_true.values
@@ -206,17 +216,17 @@ class LiteModel:
                 model_group.attrs["is_multi"] = True
                 base_model = self._model.estimator
                 model_group.attrs["wrapper_class"] = (
-                    self._model.__class__.__module__
-                    + "."
-                    + self._model.__class__.__name__
+                        self._model.__class__.__module__
+                        + "."
+                        + self._model.__class__.__name__
                 )
                 model_group.attrs["wrapper_params"] = self._safe_serialize_params(
                     self._model.get_params(deep=False)
                 )
                 model_group.attrs["estimator_class"] = (
-                    base_model.__class__.__module__
-                    + "."
-                    + base_model.__class__.__name__
+                        base_model.__class__.__module__
+                        + "."
+                        + base_model.__class__.__name__
                 )
                 model_group.attrs["estimator_params"] = self._safe_serialize_params(
                     base_model.get_params()
@@ -224,9 +234,9 @@ class LiteModel:
             else:
                 model_group.attrs["is_multi"] = False
                 model_group.attrs["model_class"] = (
-                    self._model.__class__.__module__
-                    + "."
-                    + self._model.__class__.__name__
+                        self._model.__class__.__module__
+                        + "."
+                        + self._model.__class__.__name__
                 )
                 try:
                     model_group.attrs["params"] = self._safe_serialize_params(
