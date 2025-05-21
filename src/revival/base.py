@@ -1,30 +1,29 @@
-import importlib
+import io
 import json
 import os
+import tempfile
+from datetime import date
+
 import h5py
 import joblib
-import io
-from sklearn.metrics import accuracy_score, r2_score
-from sklearn.base import BaseEstimator
+import numpy as np
 import pandas as pd
 import tensorflow.keras.models as krs_models
-from datetime import date
-from sklearn.multioutput import MultiOutputRegressor, MultiOutputClassifier
 from catboost import CatBoostClassifier, CatBoostRegressor
-import tempfile
-import numpy as np
+from sklearn.metrics import accuracy_score, r2_score
+from sklearn.multioutput import MultiOutputClassifier, MultiOutputRegressor
+
+from utils.utils import deserialize_model
 
 
 class LiteModel:
-    def __init__(self):
-        self._X_train = None
-        self._y_train = None
+    def __init__(self, X_train: pd.DataFrame, y_train: pd.DataFrame, model):
+        self._X_train = X_train
+        self._y_train = y_train
         self.prediction = pd.DataFrame()
-        self._model = None
+        self._model = model
         self._fitted = False
         self.score = None
-        self._X_test = None
-        self._y_test = None
 
     @property
     def X_train(self):
@@ -37,31 +36,6 @@ class LiteModel:
     @property
     def model(self):
         return self._model
-
-    def set_test_data(self, X_test, y_test) -> None:
-        """Function to set the test data
-        Parameters
-        X_test : pd.DataFrame
-            X test data
-        y_test : pd.DataFrame
-            y test data
-        """
-        self._X_test = X_test
-        self._y_test = y_test
-
-    def set(self, X: pd.DataFrame, y: pd.DataFrame, model: BaseEstimator) -> None:
-        """Function to set train data and the model
-        Parameters
-        X : pd.DataFrame
-            X train data
-        y: pd.DataFrame
-            y train data
-        model : BaseEstimator
-            the model used
-        """
-        self._X_train = X
-        self._y_train = y
-        self._model = model
 
     def train(self) -> None:
         """Function that aims to train the model"""
@@ -174,31 +148,6 @@ class LiteModel:
             joblib.dump(self._model, buffer)
         return buffer.getvalue()
 
-    def _deserialize_model(self, buffer: bytes, lib: str, class_name: str):
-        buffer_io = io.BytesIO(buffer)
-
-        if lib in ["keras", "tensorflow"]:
-            with tempfile.NamedTemporaryFile(suffix=".h5", delete=False) as tmp:
-                tmp.write(buffer_io.read())
-                tmp.flush()
-                model = krs_models.load_model(tmp.name)
-            os.remove(tmp.name)
-            return model
-
-        elif lib == "catboost":
-            cls = getattr(importlib.import_module("catboost"), class_name)
-            model = cls()
-
-            with tempfile.NamedTemporaryFile(suffix=".cbm", delete=False) as tmp:
-                tmp.write(buffer_io.read())
-                tmp.flush()
-                model.load_model(tmp.name)
-            os.remove(tmp.name)
-            return model
-
-        else:
-            return joblib.load(buffer_io)
-
     def dump(self, output_dir: str, file_name: str = None) -> None:
         """Function that aims to save the trained model and its data
         Parameters
@@ -240,33 +189,7 @@ class LiteModel:
                     )
                 else:
                     f.create_dataset("y_train", data=self._y_train)
-            if self._y_test is not None:
-                if isinstance(self._y_test, pd.DataFrame):
-                    f.create_dataset("y_test", data=self._y_test.values)
-                    f.create_dataset(
-                        "y_test_columns",
-                        data=np.array(self._y_test.columns.astype(str), dtype="S"),
-                    )
-                    f.create_dataset(
-                        "y_test_index",
-                        data=np.array(self._y_test.index.astype(str), dtype="S"),
-                    )
-                else:
-                    f.create_dataset("y_test", data=self._y_train)
 
-            if self._X_test is not None:
-                if isinstance(self._X_test, pd.DataFrame):
-                    f.create_dataset("X_test", data=self._X_test.values)
-                    f.create_dataset(
-                        "X_test_columns",
-                        data=np.array(self._X_test.columns.astype(str), dtype="S"),
-                    )
-                    f.create_dataset(
-                        "X_test_index",
-                        data=np.array(self._X_test.index.astype(str), dtype="S"),
-                    )
-                else:
-                    f.create_dataset("X_test", data=self._X_train)
             if self.prediction is not None:
                 f.create_dataset("y_predict", data=self.prediction)
             if self.score is not None:
@@ -316,7 +239,8 @@ class LiteModel:
 
         print(f"Model and metadata saved to {file_path}")
 
-    def load(self, path: str, file_name: str) -> None:
+    @staticmethod
+    def load(path: str, file_name: str) -> None:
         """Function that loads a trained model and its data from a hdf5 file.
         Parameters:
         ----------
@@ -332,39 +256,20 @@ class LiteModel:
                 if "X_train_columns" in f and "X_train_index" in f:
                     columns = [col.decode("utf-8") for col in f["X_train_columns"][()]]
                     index = [idx.decode("utf-8") for idx in f["X_train_index"][()]]
-                    self._X_train = pd.DataFrame(X_data, columns=columns, index=index)
+                    _X_train = pd.DataFrame(X_data, columns=columns, index=index)
                 else:
-                    self._X_train = X_data
+                    _X_train = X_data
             if "y_train" in f:
                 y_data = f["y_train"][()]
                 if "y_train_columns" in f and "y_train_index" in f:
                     columns = [col.decode("utf-8") for col in f["y_train_columns"][()]]
                     index = [idx.decode("utf-8") for idx in f["y_train_index"][()]]
-                    self._y_train = pd.DataFrame(y_data, columns=columns, index=index)
+                    _y_train = pd.DataFrame(y_data, columns=columns, index=index)
                 else:
-                    self._y_train = y_data
-            if "y_test" in f:
-                y_test_data = f["y_test"][()]
-                if "y_test_columns" in f and "y_test_index" in f:
-                    columns = [col.decode("utf-8") for col in f["y_test_columns"][()]]
-                    index = [idx.decode("utf-8") for idx in f["y_test_index"][()]]
-                    self._y_test = pd.DataFrame(
-                        y_test_data, columns=columns, index=index
-                    )
-                else:
-                    self._y_test = y_test_data
-            if "X_test" in f:
-                x_test_data = f["X_test"][()]
-                if "X_test_columns" in f and "X_test_index" in f:
-                    columns = [col.decode("utf-8") for col in f["X_test_columns"][()]]
-                    index = [idx.decode("utf-8") for idx in f["X_test_index"][()]]
-                    self._X_test = pd.DataFrame(
-                        x_test_data, columns=columns, index=index
-                    )
-                else:
-                    self._X_test = x_test_data
-            self.prediction = f["y_predict"][()] if "y_predict" in f else None
-            self.score = f.attrs.get("score")
+                    _y_train = y_data
+
+            prediction = f["y_predict"][()] if "y_predict" in f else None
+            score = f.attrs.get("score")
             # Load model bytes and metadata
             model_data = bytes(f["model_data"][()])
             model_meta = f["model_meta"]
@@ -378,6 +283,10 @@ class LiteModel:
             lib_name = next(iter(json.loads(model_meta.attrs["library"]).keys()))
             cls_name = model_class.split(".")[-1]
 
-            self._model = self._deserialize_model(model_data, lib_name, cls_name)
+            _model = deserialize_model(model_data, lib_name, cls_name)
 
         print(f"Full model loaded from {file_path}")
+        litemodel = LiteModel(X_train=_X_train, y_train=_y_train, model=_model)
+        litemodel.score = score
+        litemodel.prediction = prediction
+        return litemodel

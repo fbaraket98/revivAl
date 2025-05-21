@@ -3,6 +3,7 @@ import tempfile
 import numpy as np
 import pytest
 from catboost import CatBoostRegressor
+
 from revival import LiteModel
 
 
@@ -15,16 +16,13 @@ def lite_model():
         allow_writing_files=False,
         silent=True,
     )
-    lite_model = LiteModel()
 
     X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12], [13, 14, 15]])
     y = np.array([3, 6, 9, 12, 15])
-
-    lite_model.set(X, y, model)
+    lite_model = LiteModel(X, y, model)
     lite_model.train()
     X_new = np.array([[2, 3, 4], [5, 6, 7]])
-    lite_model.set_test_data(X_test=X_new, y_test=None)
-    lite_model.predict(lite_model._X_test)
+    lite_model.predict(X_new)
     lite_model.get_model_info()
 
     return lite_model
@@ -33,8 +31,7 @@ def lite_model():
 def test_X(lite_model):
     with tempfile.TemporaryDirectory() as tmpdir:
         lite_model.dump(tmpdir, "cat_boost")
-        load_model = LiteModel()
-        load_model.load(tmpdir, "cat_boost")
+        load_model = LiteModel.load(tmpdir, "cat_boost")
 
     assert np.allclose(
         load_model.X_train, lite_model.X_train
@@ -44,8 +41,7 @@ def test_X(lite_model):
 def test_y(lite_model):
     with tempfile.TemporaryDirectory() as tmpdir:
         lite_model.dump(tmpdir, "cat_boost")
-        load_model = LiteModel()
-        load_model.load(tmpdir, "cat_boost")
+        load_model = LiteModel.load(tmpdir, "cat_boost")
 
     assert np.allclose(
         load_model.y_train, lite_model.y_train
@@ -55,9 +51,7 @@ def test_y(lite_model):
 def test_prediction(lite_model):
     with tempfile.TemporaryDirectory() as tmpdir:
         lite_model.dump(tmpdir, "cat_boost")
-        load_model = LiteModel()
-        load_model.load(tmpdir, "cat_boost")
-
+        load_model = LiteModel.load(tmpdir, "cat_boost")
     assert np.allclose(
         load_model.prediction, lite_model.prediction
     ), "Prediction data are not matching."
@@ -76,7 +70,6 @@ def test_save_multi_output_model():
             silent=True,
         )
     )
-    surrogate_model = LiteModel()
     X = pd.DataFrame(
         {
             "tension": [1.1324, 1.345, 1.2431, 1.6452],
@@ -90,12 +83,15 @@ def test_save_multi_output_model():
             "40%": [0.2453, 0.3456, 0.3654, 0.1234],
         }
     )
+    surrogate_model = LiteModel(X, y, model)
 
-    surrogate_model.set(X, y, model)
     surrogate_model.train()
-    surrogate_model.predict(X)
+    sr_prediction = surrogate_model.predict(X)
 
     with tempfile.TemporaryDirectory() as tmpdir:
         surrogate_model.dump(tmpdir, "file_test")
-        load_model = LiteModel()
-        load_model.load(tmpdir, "file_test")
+        load_model = LiteModel.load(tmpdir, "file_test")
+    load_prediction = load_model.prediction
+    assert np.allclose(
+        sr_prediction, load_prediction
+    ), "Predictions are not matching for multioutput Regressor"
