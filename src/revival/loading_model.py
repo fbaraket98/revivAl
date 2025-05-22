@@ -16,7 +16,7 @@ import h5py
 import pandas as pd
 
 from revival import LiteModel
-from src.utils.utils import deserialize_model
+from utils.utils import deserialize_model
 
 
 def load_model(path: str, file_name: str) -> None:
