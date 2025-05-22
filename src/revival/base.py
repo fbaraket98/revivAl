@@ -87,8 +87,18 @@ class LiteModel:
             else:
                 self.score = r2_score(y_true, y_pred)
 
-        print(f"The model used is : {self.get_model_name(model)}")
-        print(f"The score of the model is {self.score}")
+        print("=" * 40)
+        print(f"✨ Model used: {self.get_model_name(model)}")
+        print(f"🔹 Features ({len(self.X_train.columns)}):")
+        for feat in self.X_train.columns:
+            print(f"   - {feat}")
+        print(f"🎯 Targets ({len(self.y_train.columns)}):")
+        for target in self.y_train.columns:
+            print(f"   - {target}")
+        print(f"✅ Model score: {self.score}")
+        print("=" * 40)
+
+
 
     @staticmethod
     def get_model_name(model):
