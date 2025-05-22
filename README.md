@@ -31,6 +31,9 @@ surrogate_model.train()
 X_new = np.array([[2, 3, 4], [5, 6, 7]])
 y_pred = surrogate_model.predict(X_new)
 
+#print inforrmtions about the model, the performance and the features and targets names
+surrogate_model.get_model_info()
+
 #Save the trained model
 surrogate_model.dump("./model_folder",'model_file')
 ```
