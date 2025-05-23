@@ -52,7 +52,7 @@ def load_model(path: str, file_name: str) -> LiteModel:
         # Load model bytes and metadata
         model_data = bytes(f["model_data"][()])
         model_meta = f["model_meta"]
-        multi = model_meta.attrs['is_multi']
+        multi = model_meta.attrs["is_multi"]
         library = json.loads(model_meta.attrs["library"])
         lib_name = next(iter(library.keys()))
         model_class = (
@@ -61,16 +61,18 @@ def load_model(path: str, file_name: str) -> LiteModel:
             else model_meta.attrs["model_class"]
         )
         lib_name = next(iter(json.loads(model_meta.attrs["library"]).keys()))
-        lib_name_classe = next(iter(json.loads(model_meta.attrs["lib_name_class"]).keys()))
+        lib_name_classe = next(
+            iter(json.loads(model_meta.attrs["lib_name_class"]).keys())
+        )
         cls_name = model_class.split(".")[-1]
         if multi:
             if "estimator_params" in model_meta.attrs:
                 est_params = json.loads(model_meta.attrs["estimator_params"])
             if "wrapper_params" in model_meta.attrs:
-                wrapp_params = json.loads(model_meta.attrs['wrapper_params'])
+                wrapp_params = json.loads(model_meta.attrs["wrapper_params"])
         else:
             if "params" in model_meta.attrs:
-                est_params = model_meta.attrs['params']
+                est_params = model_meta.attrs["params"]
         _model = deserialize_model(model_data, lib_name, cls_name)
 
     print(f"Full model loaded from {file_path}")

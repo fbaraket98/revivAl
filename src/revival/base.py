@@ -71,14 +71,15 @@ class LiteModel:
             else self._model
         )
         is_classifier = (
-                hasattr(model, "predict_proba")
-                or hasattr(model, "_estimator_type")
-                and model._estimator_type == "classifier"
+            hasattr(model, "predict_proba")
+            or hasattr(model, "_estimator_type")
+            and model._estimator_type == "classifier"
         )
         return is_classifier
 
     def re_train(self):
         import importlib
+
         module = importlib.import_module(self.lib_name_classe)
         ModelClass = getattr(module, self.cls_name)
         if self._is_multi and self.get_if_classifier():
@@ -107,7 +108,7 @@ class LiteModel:
             y_true = y_eval
 
             # Detect classification (y must be categorical or discrete)
-            is_classifier =self.get_if_classifier()
+            is_classifier = self.get_if_classifier()
             if isinstance(y_true, pd.DataFrame):
                 y_true = y_true.values
 
@@ -127,14 +128,12 @@ class LiteModel:
         print(f"✅ Model score: {self.score}")
         print("=" * 40)
 
-
     def get_model_name(self):
         """Function that returns the name of the model"""
         if self._is_multi:
             return type(self._model.estimator).__name__
         else:
             return type(self._model).__name__
-
 
     def predict(self, X_test: pd.DataFrame) -> None:
 
@@ -272,17 +271,17 @@ class LiteModel:
                 model_group.attrs["is_multi"] = True
                 base_model = self._model.estimator
                 model_group.attrs["wrapper_class"] = (
-                        self._model.__class__.__module__
-                        + "."
-                        + self._model.__class__.__name__
+                    self._model.__class__.__module__
+                    + "."
+                    + self._model.__class__.__name__
                 )
                 model_group.attrs["wrapper_params"] = self._safe_serialize_params(
                     self._model.get_params(deep=False)
                 )
                 model_group.attrs["estimator_class"] = (
-                        base_model.__class__.__module__
-                        + "."
-                        + base_model.__class__.__name__
+                    base_model.__class__.__module__
+                    + "."
+                    + base_model.__class__.__name__
                 )
                 model_group.attrs["estimator_params"] = self._safe_serialize_params(
                     base_model.get_params()
@@ -290,9 +289,9 @@ class LiteModel:
             else:
                 model_group.attrs["is_multi"] = False
                 model_group.attrs["model_class"] = (
-                        self._model.__class__.__module__
-                        + "."
-                        + self._model.__class__.__name__
+                    self._model.__class__.__module__
+                    + "."
+                    + self._model.__class__.__name__
                 )
                 try:
                     model_group.attrs["params"] = self._safe_serialize_params(
@@ -302,5 +301,5 @@ class LiteModel:
                     model_group.attrs["params"] = json.dumps({})
 
             model_group.attrs["library"] = json.dumps(self._get_model_library())
-            model_group.attrs['lib_name_class'] = json.dumps(self.get_lib_name())
+            model_group.attrs["lib_name_class"] = json.dumps(self.get_lib_name())
         print(f"Model and metadata saved to {file_path}")

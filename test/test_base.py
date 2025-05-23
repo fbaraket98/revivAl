@@ -37,7 +37,6 @@ def lite_model():
     y = pd.DataFrame(
         {
             "min": [0, 0, 1, 0],
-
         }
     )
     lite_model = LiteModel(X, y, model)
