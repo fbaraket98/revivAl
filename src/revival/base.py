@@ -54,6 +54,7 @@ class LiteModel:
 
     def train(self) -> None:
         """Function that aims to train the model"""
+
         try:
             self._model.set_training_values(self._X_train, self._y_train)
             self._model.train()
@@ -145,11 +146,7 @@ class LiteModel:
             try:
                 self.prediction = self._model.predict_values(X_test)
             except:
-                self.re_train()
-                try:
-                    self.prediction = self._model.predict(X_test)
-                except:
-                    self.prediction = self._model.predict_values(X_test)
+                raise ValueError("Model was not trained!")
         if self.prediction.ndim == 3 and self.prediction.shape[0] == 1:
             self.prediction = self.prediction[0]
 

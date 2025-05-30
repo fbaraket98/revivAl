@@ -17,6 +17,7 @@ import pandas as pd
 
 from revival import LiteModel
 from utils.utils import deserialize_model
+from sklearn.multioutput import MultiOutputClassifier, MultiOutputRegressor
 
 
 def load_model(path: str, file_name: str) -> LiteModel:
@@ -64,8 +65,12 @@ def load_model(path: str, file_name: str) -> LiteModel:
         lib_name_classe = next(
             iter(json.loads(model_meta.attrs["lib_name_class"]).keys())
         )
+        wrapp = None
         cls_name = model_class.split(".")[-1]
         if multi:
+            if "wrapper_class" in model_meta.attrs:
+                wrapp = model_meta.attrs['wrapper_class']
+
             if "estimator_params" in model_meta.attrs:
                 est_params = json.loads(model_meta.attrs["estimator_params"])
             if "wrapper_params" in model_meta.attrs:
@@ -73,7 +78,11 @@ def load_model(path: str, file_name: str) -> LiteModel:
         else:
             if "params" in model_meta.attrs:
                 est_params = model_meta.attrs["params"]
-        _model = deserialize_model(model_data, lib_name, cls_name)
+        try:
+            _model = deserialize_model(model_data, lib_name, cls_name)
+        except:
+            _model = create_model_refit(lib_name_classe, cls_name, est_params , multi, wrapp)
+
 
     print(f"Full model loaded from {file_path}")
     litemodel = LiteModel(X_train=_X_train, y_train=_y_train, model=_model)
@@ -85,4 +94,20 @@ def load_model(path: str, file_name: str) -> LiteModel:
     litemodel.cls_name = cls_name
     litemodel._is_multi = multi
     litemodel.prediction = prediction
+    litemodel.train()
     return litemodel
+
+def create_model_refit(lib_name_classe, cls_name, est_params , multi, wrapp = None):
+    import importlib
+    est_params = json.loads(est_params)
+    module = importlib.import_module(lib_name_classe)
+    ModelClass = getattr(module, cls_name)
+    if multi and isinstance(wrapp, MultiOutputClassifier):
+        _model = MultiOutputClassifier(ModelClass(**est_params))
+    elif multi and not isinstance(wrapp, MultiOutputRegressor):
+        _model = MultiOutputRegressor(ModelClass(**est_params))
+    else:
+        print(type(est_params))
+        print("creating model")
+        _model = ModelClass(**est_params)
+    return _model
