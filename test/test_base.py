@@ -13,7 +13,7 @@ import tempfile
 import numpy as np
 import pytest
 from catboost import CatBoostRegressor
-
+import pandas as pd
 from revival import LiteModel, load_model
 
 
@@ -27,11 +27,26 @@ def lite_model():
         silent=True,
     )
 
-    X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12], [13, 14, 15]])
-    y = np.array([3, 6, 9, 12, 15])
+    X = pd.DataFrame(
+        {
+            "tension": [1.1324, 1.345, 1.2431, 1.6452],
+            "amplitude": [4.1324, 4.345, 5.2431, 4.6452],
+        }
+    )
+
+    y = pd.DataFrame(
+        {
+            "min": [0, 0, 1, 0],
+        }
+    )
     lite_model = LiteModel(X, y, model)
     lite_model.train()
-    X_new = np.array([[2, 3, 4], [5, 6, 7]])
+    X_new = pd.DataFrame(
+        {
+            "tension": [1.3564, 1.7845, 1.6934, 1.12345],
+            "amplitude": [4.325, 5.1234, 4.134, 4.7542],
+        }
+    )
     lite_model.predict(X_new)
     lite_model.get_model_info()
 

@@ -17,9 +17,10 @@ import pandas as pd
 
 from revival import LiteModel
 from utils.utils import deserialize_model
+from sklearn.multioutput import MultiOutputClassifier, MultiOutputRegressor
 
 
-def load_model(path: str, file_name: str) -> None:
+def load_model(path: str, file_name: str) -> LiteModel:
     """Function that loads a trained model and its data from a hdf5 file.
     Parameters:
     ----------
@@ -52,6 +53,7 @@ def load_model(path: str, file_name: str) -> None:
         # Load model bytes and metadata
         model_data = bytes(f["model_data"][()])
         model_meta = f["model_meta"]
+        multi = model_meta.attrs["is_multi"]
         library = json.loads(model_meta.attrs["library"])
         lib_name = next(iter(library.keys()))
         model_class = (
@@ -60,12 +62,52 @@ def load_model(path: str, file_name: str) -> None:
             else model_meta.attrs["model_class"]
         )
         lib_name = next(iter(json.loads(model_meta.attrs["library"]).keys()))
+        lib_name_classe = next(
+            iter(json.loads(model_meta.attrs["lib_name_class"]).keys())
+        )
+        wrapp = None
         cls_name = model_class.split(".")[-1]
+        if multi:
+            if "wrapper_class" in model_meta.attrs:
+                wrapp = model_meta.attrs['wrapper_class']
 
-        _model = deserialize_model(model_data, lib_name, cls_name)
+            if "estimator_params" in model_meta.attrs:
+                est_params = json.loads(model_meta.attrs["estimator_params"])
+            if "wrapper_params" in model_meta.attrs:
+                wrapp_params = json.loads(model_meta.attrs["wrapper_params"])
+        else:
+            if "params" in model_meta.attrs:
+                est_params = model_meta.attrs["params"]
+        try:
+            _model = deserialize_model(model_data, lib_name, cls_name)
+        except:
+            _model = create_model_refit(lib_name_classe, cls_name, est_params , multi, wrapp)
+
 
     print(f"Full model loaded from {file_path}")
     litemodel = LiteModel(X_train=_X_train, y_train=_y_train, model=_model)
     litemodel.score = score
+    litemodel.est_params = est_params
+    litemodel.wrapp_params = wrapp_params if multi else None
+    litemodel.lib_name = lib_name
+    litemodel.lib_name_classe = lib_name_classe
+    litemodel.cls_name = cls_name
+    litemodel._is_multi = multi
     litemodel.prediction = prediction
+    litemodel.train()
     return litemodel
+
+def create_model_refit(lib_name_classe, cls_name, est_params , multi, wrapp = None):
+    import importlib
+    est_params = json.loads(est_params)
+    module = importlib.import_module(lib_name_classe)
+    ModelClass = getattr(module, cls_name)
+    if multi and isinstance(wrapp, MultiOutputClassifier):
+        _model = MultiOutputClassifier(ModelClass(**est_params))
+    elif multi and not isinstance(wrapp, MultiOutputRegressor):
+        _model = MultiOutputRegressor(ModelClass(**est_params))
+    else:
+        print(type(est_params))
+        print("creating model")
+        _model = ModelClass(**est_params)
+    return _model

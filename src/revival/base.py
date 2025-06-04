@@ -32,6 +32,13 @@ class LiteModel:
         self._model = model
         self._fitted = False
         self.score = None
+        self._is_multi = None
+        self.hyperparams = None
+        self.lib_name = None
+        self.cls_name = None
+        self.lib_name_classe = None
+        self.est_params = None
+        self.wrapp_params = None
 
     @property
     def X_train(self):
@@ -47,6 +54,7 @@ class LiteModel:
 
     def train(self) -> None:
         """Function that aims to train the model"""
+
         try:
             self._model.set_training_values(self._X_train, self._y_train)
             self._model.train()
@@ -57,12 +65,39 @@ class LiteModel:
                 self._model.fit(self._X_train, self._y_train)
         self._fitted = True
 
+    def get_if_classifier(self):
+        model = (
+            self._model.estimator
+            if isinstance(self._model, (MultiOutputRegressor, MultiOutputClassifier))
+            else self._model
+        )
+        is_classifier = (
+            hasattr(model, "predict_proba")
+            or hasattr(model, "_estimator_type")
+            and model._estimator_type == "classifier"
+        )
+        return is_classifier
+
+    def re_train(self):
+        import importlib
+
+        module = importlib.import_module(self.lib_name_classe)
+        ModelClass = getattr(module, self.cls_name)
+        if self._is_multi and self.get_if_classifier():
+            self._model = MultiOutputClassifier(ModelClass(**self.est_params))
+
+        elif self._is_multi and not self.get_if_classifier():
+            self._model = MultiOutputRegressor(ModelClass(**self.est_params))
+        else:
+            self._model = ModelClass(**self.est_params)
+        self.train()
+
     def get_model_info(self, X=None, y=None):
         """Function that prints the model used and its score"""
 
         # Multioutput wrapper: get inner model
         model = (
-            self._model.estimator.model
+            self._model.estimator
             if isinstance(self._model, (MultiOutputRegressor, MultiOutputClassifier))
             else self._model
         )
@@ -74,11 +109,7 @@ class LiteModel:
             y_true = y_eval
 
             # Detect classification (y must be categorical or discrete)
-            is_classifier = (
-                hasattr(model, "predict_proba")
-                or hasattr(model, "_estimator_type")
-                and model._estimator_type == "classifier"
-            )
+            is_classifier = self.get_if_classifier()
             if isinstance(y_true, pd.DataFrame):
                 y_true = y_true.values
 
@@ -87,20 +118,26 @@ class LiteModel:
             else:
                 self.score = r2_score(y_true, y_pred)
 
-        print(f"The model used is : {self.get_model_name(model)}")
-        print(f"The score of the model is {self.score}")
+        print("=" * 40)
+        print(f"✨ Model used: {self.get_model_name()}")
+        print(f"🔹 Features ({len(self.X_train.columns)}):")
+        for feat in self.X_train.columns:
+            print(f"   - {feat}")
+        print(f"🎯 Targets ({len(self.y_train.columns)}):")
+        for target in self.y_train.columns:
+            print(f"   - {target}")
+        print(f"✅ Model score: {self.score}")
+        print("=" * 40)
 
-    @staticmethod
-    def get_model_name(model):
+    def get_model_name(self):
         """Function that returns the name of the model"""
-        if hasattr(model, "name"):
-            return model.name
-        elif hasattr(model, "__class__"):
-            return model.__class__.__name__
+        if self._is_multi:
+            return type(self._model.estimator).__name__
         else:
-            return str(type(model))
+            return type(self._model).__name__
 
     def predict(self, X_test: pd.DataFrame) -> None:
+
         if not self._model:
             raise ValueError("The model was not set or loaded.")
         try:
@@ -131,10 +168,27 @@ class LiteModel:
 
         return json.dumps(convert(params))
 
+    def get_lib_name(self):
+        self.is_multi_output()
+        if self._is_multi:
+            library = type(self._model.estimator).__module__.split(".")[0]
+        else:
+            library = type(self._model).__module__.split(".")[0]
+
+        version = __import__(library).__version__
+        return {library: version}
+
     def _get_model_library(self) -> dict:
+
         library = type(self._model).__module__.split(".")[0]
         version = __import__(library).__version__
         return {library: version}
+
+    def is_multi_output(self):
+        if isinstance(self._model, (MultiOutputRegressor, MultiOutputClassifier)):
+            self._is_multi = True
+        else:
+            self._is_multi = False
 
     def _serialize_model(self) -> bytes:
         """Serialize any model as bytes"""
@@ -244,5 +298,5 @@ class LiteModel:
                     model_group.attrs["params"] = json.dumps({})
 
             model_group.attrs["library"] = json.dumps(self._get_model_library())
-
+            model_group.attrs["lib_name_class"] = json.dumps(self.get_lib_name())
         print(f"Model and metadata saved to {file_path}")
