@@ -82,7 +82,7 @@ def load_model(path: str, file_name: str) -> LiteModel:
             _model = deserialize_model(model_data, lib_name, cls_name)
         except:
             _model = create_model_refit(lib_name_classe, cls_name, est_params , multi, wrapp)
-
+            _model.train()
 
     print(f"Full model loaded from {file_path}")
     litemodel = LiteModel(X_train=_X_train, y_train=_y_train, model=_model)
@@ -94,7 +94,6 @@ def load_model(path: str, file_name: str) -> LiteModel:
     litemodel.cls_name = cls_name
     litemodel._is_multi = multi
     litemodel.prediction = prediction
-    litemodel.train()
     return litemodel
 
 def create_model_refit(lib_name_classe, cls_name, est_params , multi, wrapp = None):
