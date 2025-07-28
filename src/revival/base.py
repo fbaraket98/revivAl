@@ -171,11 +171,16 @@ class LiteModel:
     def get_lib_name(self):
         self.is_multi_output()
         if self._is_multi:
-            library = type(self._model.estimator).__module__.split(".")[0]
+            try:
+                library = type(self._model.estimator).__module__.split(".")[0]
+                version = __import__(library).__version__
+            except :
+                library = type(self._model).__module__.split(".")[0]
+                version = __import__(library).__version__
         else:
             library = type(self._model).__module__.split(".")[0]
+            version = __import__(library).__version__
 
-        version = __import__(library).__version__
         return {library: version}
 
     def _get_model_library(self) -> dict:
