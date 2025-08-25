@@ -102,8 +102,8 @@ class LiteModel:
             else self._model
         )
         if self.score is None:
-            X_eval = X if X is not None else self._X_train
-            y_eval = y if y is not None else self._y_train
+            X_eval = pd.DataFrame(X) if X is not None else self._X_train
+            y_eval = pd.DataFrame(y) if y is not None else self._y_train
 
             y_pred = self.predict(X_eval).values
             y_true = y_eval
@@ -120,11 +120,11 @@ class LiteModel:
 
         print("=" * 40)
         print(f"✨ Model used: {self.get_model_name()}")
-        print(f"🔹 Features ({len(self.X_train.columns)}):")
-        for feat in self.X_train.columns:
+        print(f"🔹 Features ({len(pd.DataFrame(self.X_train).columns)}):")
+        for feat in pd.DataFrame(self.X_train).columns:
             print(f"   - {feat}")
-        print(f"🎯 Targets ({len(self.y_train.columns)}):")
-        for target in self.y_train.columns:
+        print(f"🎯 Targets ({len(pd.DataFrame(self.y_train).columns)}):")
+        for target in pd.DataFrame(self.y_train).columns:
             print(f"   - {target}")
         print(f"✅ Model score: {self.score}")
         print("=" * 40)
