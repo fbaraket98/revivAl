@@ -18,7 +18,6 @@ import h5py
 import joblib
 import numpy as np
 import pandas as pd
-import tensorflow.keras.models as krs_models
 from catboost import CatBoostClassifier, CatBoostRegressor
 from sklearn.metrics import accuracy_score, r2_score
 from sklearn.multioutput import MultiOutputClassifier, MultiOutputRegressor
@@ -199,13 +198,8 @@ class LiteModel:
         """Serialize any model as bytes"""
 
         buffer = io.BytesIO()
-        if isinstance(self._model, krs_models.Model):
-            with tempfile.NamedTemporaryFile(suffix=".h5", delete=False) as tmp:
-                self._model.save(tmp.name)
-                tmp.seek(0)
-                buffer.write(tmp.read())
-            os.remove(tmp.name)
-        elif isinstance(self._model, (CatBoostClassifier, CatBoostRegressor)):
+
+        if isinstance(self._model, (CatBoostClassifier, CatBoostRegressor)):
             with tempfile.NamedTemporaryFile(suffix=".cbm", delete=False) as tmp:
                 self._model.save_model(tmp.name)
                 tmp.seek(0)
