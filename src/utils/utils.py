@@ -14,21 +14,11 @@ import os
 import tempfile
 
 import joblib
-import tensorflow.keras.models as krs_models
 
 
 def deserialize_model(buffer: bytes, lib: str, class_name: str):
     buffer_io = io.BytesIO(buffer)
-
-    if lib in ["keras", "tensorflow"]:
-        with tempfile.NamedTemporaryFile(suffix=".h5", delete=False) as tmp:
-            tmp.write(buffer_io.read())
-            tmp.flush()
-            model = krs_models.load_model(tmp.name)
-        os.remove(tmp.name)
-        return model
-
-    elif lib == "catboost":
+    if lib == "catboost":
         cls = getattr(importlib.import_module("catboost"), class_name)
         model = cls()
 
@@ -41,3 +31,20 @@ def deserialize_model(buffer: bytes, lib: str, class_name: str):
 
     else:
         return joblib.load(buffer_io)
+
+def train_or_fit(model, X, y):
+    """
+    Entraîne le modèle en utilisant train() si disponible, sinon fit().
+    """
+    try:
+        model.set_training_values(X, y)
+        model.train()
+    except AttributeError:
+        try:
+            model.train(X, y)
+        except AttributeError:
+            try:
+                model.fit(X, y)
+            except AttributeError:
+                raise ValueError("Le modèle n'a pas de méthode train ou fit")
+    return model
